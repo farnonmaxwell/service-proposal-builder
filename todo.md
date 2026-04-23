@@ -36,53 +36,53 @@
 - [x] Step 1: Template selection (8+ trades)
 - [x] Step 2: Client info (name, address, email, phone)
 - [x] Step 3: Scope of work (pre-filled, editable)
-- [ ] Step 4: Pricing table (line items, qty, unit price, totals) - MVP stub
+- [x] Step 4: Pricing table (line items, qty, unit price, totals)
 - [x] Step 5: Timeline/milestones
 - [x] Step 6: Terms & conditions (pre-filled, editable)
 - [x] Step 7: Company branding (logo upload, colors, contact)
 - [x] Step 8: Preview & send
 
 ## Pricing Table
-- [ ] Line item editor (description, qty, unit, unit price, total) - MVP stub
-- [ ] Subtotal calculation - MVP stub
-- [ ] Tax toggle - MVP stub
-- [ ] Discount line - MVP stub
-- [ ] Grand total - MVP stub
-- [ ] Good/Better/Best tiered pricing (optional 3-column) - future
-- [ ] Save custom line items to library - MVP stub
+- [x] Line item editor (description, qty, unit, unit price, total)
+- [x] Subtotal calculation
+- [x] Tax toggle
+- [x] Discount line
+- [x] Grand total
+- [x] Good/Better/Best tiered pricing (3-column comparison)
+- [x] Save custom line items to library
 
 ## E-Signature (Stub)
-- [ ] Canvas-based signature drawing - MVP stub
-- [ ] Capture name, date, IP address - MVP stub
-- [ ] Store locally (no DocuSign integration) - MVP stub
+- [x] Canvas-based signature drawing
+- [x] Capture name, date, IP address
+- [x] Store locally (no DocuSign integration)
 
 ## PDF Export
-- [ ] Professional PDF with company branding - MVP stub
-- [ ] Auto-generated filename: [Company]-[Client]-[Date].pdf - MVP stub
-- [ ] Email proposal to client (stub - mailto link) - MVP stub
+- [x] Professional PDF with company branding (window.print)
+- [x] Auto-generated filename: [Company]-[Client]-[Date].pdf
+- [x] Email proposal to client (stub - mailto link)
 
 ## Company Settings
-- [ ] Logo upload - MVP stub
+- [x] Logo upload (URL input)
 - [x] Company name, address, phone, email, license number
 - [x] Default terms and conditions
 - [x] Default payment terms
-- [ ] Saved line items library - MVP stub
+- [x] Saved line items library
 
 ## Template Library (8+ Trades)
-- [ ] Roofing (repair + full replacement) - needs seed data
-- [ ] Plumbing (service call + remodel) - needs seed data
-- [ ] Landscaping (maintenance contract + design/build) - needs seed data
-- [ ] Painting (interior + exterior) - needs seed data
-- [ ] HVAC (installation + service agreement) - needs seed data
-- [ ] Electrical (panel upgrade + new construction) - needs seed data
-- [ ] General Contractor (remodel + new build) - needs seed data
-- [ ] Pressure Washing / Cleaning - needs seed data
+- [x] Roofing (repair + full replacement)
+- [x] Plumbing (service call + remodel)
+- [x] Landscaping (maintenance contract + design/build)
+- [x] Painting (interior + exterior)
+- [x] HVAC (installation + service agreement)
+- [x] Electrical (panel upgrade + new construction)
+- [x] General Contractor (remodel + new build)
+- [x] Pressure Washing / Cleaning
 
 ## Admin Dashboard
-- [ ] Total users count - future
-- [ ] Subscriptions count & revenue - future
-- [ ] Proposals created count - future
-- [ ] Revenue tracking - future
+- [x] Total users count
+- [x] Subscriptions count & revenue
+- [x] Proposals created count
+- [x] Revenue tracking
 
 ## Branding & Design
 - [x] Colors: slate blue (#475569), white, warm gray, accent green (#22c55e)
@@ -94,6 +94,12 @@
 
 ## Deployment & GitHub
 - [x] Create README.md with tech stack, env vars, local run instructions
-- [ ] Save checkpoint
-- [ ] Deploy live to Manus
+- [x] Save checkpoint
+- [x] Deploy live to Manus
+- [x] Seed 8 trade templates with scope, pricing, terms, timeline
+- [x] Stripe stub with test keys
+- [x] Proposal preview page with full details
+- [x] Proposal send flow (mailto stub)
+- [ ] Save final checkpoint with all features
+- [ ] Redeploy with all new features
 - [ ] Push source code to GitHub (farnonmaxwell/service-proposal-builder)

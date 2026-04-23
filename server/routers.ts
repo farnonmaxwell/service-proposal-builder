@@ -1,9 +1,26 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
+
+// Seed templates on startup
+db.seedTemplates().catch(console.error);
+
+// Stripe stub - uses test keys or env vars
+const STRIPE_PUBLIC_KEY = process.env.STRIPE_PUBLIC_KEY || "pk_test_stub_service_proposal_builder";
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "sk_test_stub_service_proposal_builder";
+const STRIPE_MONTHLY_PRICE = process.env.STRIPE_MONTHLY_PRICE_ID || "price_monthly_39";
+const STRIPE_LIFETIME_PRICE = process.env.STRIPE_LIFETIME_PRICE_ID || "price_lifetime_99";
+
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+  }
+  return next({ ctx });
+});
 
 export const appRouter = router({
   system: systemRouter,
@@ -12,17 +29,21 @@ export const appRouter = router({
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      return { success: true } as const;
     }),
   }),
 
   proposals: router({
-    list: publicProcedure.query(async ({ ctx }) => {
-      if (!ctx.user) return [];
-      return db.getProposals(ctx.user.id);
-    }),
+    list: publicProcedure
+      .input(z.object({ status: z.string().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        if (!ctx.user) return [];
+        const all = await db.getProposals(ctx.user.id);
+        if (input?.status && input.status !== "all") {
+          return all.filter((p) => p.status === input.status);
+        }
+        return all;
+      }),
     get: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
@@ -40,11 +61,8 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        if (!ctx.user) throw new Error("Not authenticated");
-        return db.createProposal({
-          userId: ctx.user.id,
-          ...input,
-        });
+        if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
+        return db.createProposal({ userId: ctx.user.id, ...input });
       }),
     update: publicProcedure
       .input(
@@ -74,6 +92,15 @@ export const appRouter = router({
         const { id, ...data } = input;
         return db.updateProposal(id, data);
       }),
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return db.deleteProposal(input.id);
+      }),
+    stats: publicProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) return { total: 0, sent: 0, sentThisMonth: 0, signed: 0, avgDealSize: 0, closeRate: 0 };
+      return db.getDashboardStats(ctx.user.id);
+    }),
   }),
 
   templates: router({
@@ -101,11 +128,8 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        if (!ctx.user) throw new Error("Not authenticated");
-        return db.createLineItem({
-          userId: ctx.user.id,
-          ...input,
-        });
+        if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
+        return db.createLineItem({ userId: ctx.user.id, ...input });
       }),
     delete: publicProcedure
       .input(z.object({ id: z.number() }))
@@ -119,19 +143,33 @@ export const appRouter = router({
       if (!ctx.user) return null;
       return db.getSubscription(ctx.user.id);
     }),
-    create: publicProcedure
-      .input(
-        z.object({
-          plan: z.enum(["monthly", "lifetime"]),
-          stripeCustomerId: z.string().optional(),
-          stripeSubscriptionId: z.string().optional(),
-        })
-      )
+    getPublicKey: publicProcedure.query(() => {
+      return { publicKey: STRIPE_PUBLIC_KEY };
+    }),
+    createCheckout: publicProcedure
+      .input(z.object({ plan: z.enum(["monthly", "lifetime"]), coupon: z.string().optional() }))
       .mutation(async ({ ctx, input }) => {
-        if (!ctx.user) throw new Error("Not authenticated");
+        if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
+        // Stub: In production, create a real Stripe checkout session
+        // using STRIPE_SECRET_KEY, STRIPE_MONTHLY_PRICE / STRIPE_LIFETIME_PRICE
+        console.log(`[Stripe Stub] Creating checkout for user ${ctx.user.id}, plan: ${input.plan}, coupon: ${input.coupon}`);
+        const amount = input.plan === "lifetime" ? 99 : 39;
+        return {
+          stub: true,
+          plan: input.plan,
+          amount,
+          message: `Stripe TEST MODE - ${input.plan === "lifetime" ? "$99 Lifetime" : "$39/month"} plan`,
+          // In production: return { url: checkoutSession.url }
+        };
+      }),
+    activate: publicProcedure
+      .input(z.object({ plan: z.enum(["monthly", "lifetime"]) }))
+      .mutation(async ({ ctx, input }) => {
+        if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
         return db.createSubscription({
           userId: ctx.user.id,
-          ...input,
+          plan: input.plan,
+          status: "active",
         });
       }),
   }),
@@ -158,7 +196,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        if (!ctx.user) throw new Error("Not authenticated");
+        if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED" });
         return db.upsertCompanySettings(ctx.user.id, input);
       }),
   }),
@@ -181,6 +219,18 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return db.getSignature(input.proposalId);
       }),
+  }),
+
+  admin: router({
+    stats: adminProcedure.query(async () => {
+      return db.getAdminStats();
+    }),
+    recentUsers: adminProcedure.query(async () => {
+      return db.getRecentUsers(20);
+    }),
+    recentSubscriptions: adminProcedure.query(async () => {
+      return db.getRecentSubscriptions(20);
+    }),
   }),
 });
 
