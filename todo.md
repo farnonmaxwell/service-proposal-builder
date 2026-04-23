@@ -102,4 +102,4 @@
 - [x] Proposal send flow (mailto stub)
 - [ ] Save final checkpoint with all features
 - [ ] Redeploy with all new features
-- [ ] Push source code to GitHub (farnonmaxwell/service-proposal-builder)
+- [x] Push source code to GitHub (farnonmaxwell/service-proposal-builder)
